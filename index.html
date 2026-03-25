@@ -10,8 +10,8 @@
     :root {
       --bg: #f5f2ed; --surface: #ffffff; --surface2: #faf8f5; --border: #e8e4de;
       --text: #1a1614; --muted: #7a736b; --accent: #c45e2a; --accent-light: #fdf0e8;
-      --blue: #2563eb; --blue-light: #eff6ff; --green: #16a34a; --green-light: #f0fdf4;
-      --amber: #d97706; --amber-light: #fffbeb; --teal: #0891b2; --teal-light: #ecfeff;
+      --blue: #2563eb; --green: #16a34a; --green-light: #f0fdf4;
+      --amber: #d97706; --amber-light: #fffbeb; --teal: #0891b2;
       --radius: 10px; --radius-sm: 6px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -98,10 +98,6 @@
     .empty { color: var(--muted); font-size: 14px; font-style: italic; padding: 1rem 0; }
     .muted { color: var(--muted); font-size: 13px; }
     .loading { text-align: center; padding: 4rem; color: var(--muted); font-size: 16px; }
-    .config-screen { max-width: 560px; margin: 4rem auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; }
-    .config-screen h2 { font-family: 'DM Serif Display', serif; font-size: 24px; font-weight: 400; margin-bottom: 0.5rem; }
-    .config-screen p { color: var(--muted); font-size: 14px; margin-bottom: 1.5rem; }
-    .config-screen .form label { font-size: 13px; font-weight: 600; color: var(--muted); }
     @media (max-width: 640px) {
       .header-inner { padding: 0 1rem; gap: 0.75rem; }
       .nav-btn { padding: 6px 10px; font-size: 13px; }
@@ -113,29 +109,21 @@
 <body>
 <div id="root"></div>
 
-<!-- React + Babel (no build step) -->
+<!-- React -->
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-<!-- Firebase -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import {
-    getFirestore, collection, addDoc, doc,
-    query, orderBy, onSnapshot, deleteDoc, serverTimestamp
-  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-  window.__firebase = { initializeApp, getFirestore, collection, addDoc, doc, query, orderBy, onSnapshot, deleteDoc, serverTimestamp };
-</script>
-
-<script type="text/babel" data-presets="react">
+<!-- Firebase compat (loads synchronously as window.firebase global) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script type="text/babel" data-presets="react">
 const { useState, useEffect } = React;
 const COMMISSION = 0.30;
 
-// ── PASTE YOUR FIREBASE CONFIG HERE ───────────────────────────────────────────
-// Get these values from: Firebase Console → Project Settings → Your apps → SDK setup
+// ── PASTE YOUR FIREBASE CONFIG HERE ──────────────────────────────────────────
+// Firebase Console → Project Settings → Your apps → SDK setup and config
 const FIREBASE_CONFIG = {
   apiKey:            "AIzaSyCZUPk4_YCb0RUieWSzzq87gdqkkJ67_eM",
   authDomain:        "das-lazy.firebaseapp.com",
@@ -146,8 +134,12 @@ const FIREBASE_CONFIG = {
 };
 // ─────────────────────────────────────────────────────────────────────────────
 
-function formatCurrency(amount) {
-  return new Intl.NumberFormat("de-AT", { style: "currency", currency: "EUR" }).format(amount || 0);
+// Initialise Firebase once
+const fbApp = firebase.initializeApp(FIREBASE_CONFIG);
+const db    = firebase.firestore();
+
+function formatCurrency(n) {
+  return new Intl.NumberFormat("de-AT", { style: "currency", currency: "EUR" }).format(n || 0);
 }
 function formatDate(ts) {
   if (!ts) return "—";
@@ -155,9 +147,8 @@ function formatDate(ts) {
   return d.toLocaleDateString("de-AT", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
-// ── Main App ───────────────────────────────────────────────────────────────────
+// ── App ───────────────────────────────────────────────────────────────────────
 function App() {
-  const [db, setDb] = useState(null);
   const [tab, setTab] = useState("dashboard");
   const [artists, setArtists] = useState([]);
   const [sales, setSales] = useState([]);
@@ -168,31 +159,16 @@ function App() {
   const [showAddPayout, setShowAddPayout] = useState(false);
 
   useEffect(() => {
-    try {
-      const { initializeApp, getFirestore } = window.__firebase;
-      const app = initializeApp(FIREBASE_CONFIG);
-      setDb(getFirestore(app));
-    } catch(e) {
-      alert("Firebase init failed: " + e.message);
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!db) return;
-    const { collection, query, orderBy, onSnapshot } = window.__firebase;
-    const u1 = onSnapshot(collection(db, "artists"), snap => {
-      setArtists(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    });
-    const u2 = onSnapshot(query(collection(db, "sales"), orderBy("date", "desc")), snap => {
-      setSales(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    });
-    const u3 = onSnapshot(query(collection(db, "payouts"), orderBy("date", "desc")), snap => {
+    const u1 = db.collection("artists").onSnapshot(snap =>
+      setArtists(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
+    const u2 = db.collection("sales").orderBy("date", "desc").onSnapshot(snap =>
+      setSales(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
+    const u3 = db.collection("payouts").orderBy("date", "desc").onSnapshot(snap => {
       setPayouts(snap.docs.map(d => ({ id: d.id, ...d.data() })));
       setLoading(false);
     });
     return () => { u1(); u2(); u3(); };
-  }, [db]);
+  }, []);
 
   function getArtistName(id) { return artists.find(a => a.id === id)?.name || "Unknown"; }
 
@@ -206,7 +182,7 @@ function App() {
     return { totalRevenue, cafeCut, artistOwed, totalPaid, outstanding: artistOwed - totalPaid, salesCount: as.length };
   }
 
-  if (loading) return <div className="loading">Connecting to Firebase…</div>;
+  if (loading) return <div className="loading">Loading…</div>;
 
   const totalRevenue = sales.reduce((s, x) => s + x.price, 0);
   const totalCafe = totalRevenue * COMMISSION;
@@ -232,18 +208,18 @@ function App() {
       </header>
       <main>
         {tab==="dashboard" && <Dashboard totalRevenue={totalRevenue} totalCafe={totalCafe} totalOutstanding={totalOutstanding} totalPaid={totalPaid} artists={artists} getArtistStats={getArtistStats} setTab={setTab} />}
-        {tab==="sales"     && <SalesTab sales={sales} artists={artists} getArtistName={getArtistName} onAdd={() => setShowAddSale(true)} db={db} />}
-        {tab==="artists"   && <ArtistsTab artists={artists} getArtistStats={getArtistStats} onAdd={() => setShowAddArtist(true)} db={db} />}
-        {tab==="payouts"   && <PayoutsTab payouts={payouts} artists={artists} getArtistName={getArtistName} getArtistStats={getArtistStats} onAdd={() => setShowAddPayout(true)} db={db} />}
+        {tab==="sales"     && <SalesTab sales={sales} artists={artists} getArtistName={getArtistName} onAdd={() => setShowAddSale(true)} />}
+        {tab==="artists"   && <ArtistsTab artists={artists} getArtistStats={getArtistStats} onAdd={() => setShowAddArtist(true)} />}
+        {tab==="payouts"   && <PayoutsTab payouts={payouts} artists={artists} getArtistName={getArtistName} getArtistStats={getArtistStats} onAdd={() => setShowAddPayout(true)} />}
       </main>
-      {showAddArtist && <AddArtistModal db={db} onClose={() => setShowAddArtist(false)} />}
-      {showAddSale   && <AddSaleModal db={db} artists={artists} onClose={() => setShowAddSale(false)} />}
-      {showAddPayout && <AddPayoutModal db={db} artists={artists} getArtistStats={getArtistStats} onClose={() => setShowAddPayout(false)} />}
+      {showAddArtist && <AddArtistModal onClose={() => setShowAddArtist(false)} />}
+      {showAddSale   && <AddSaleModal artists={artists} onClose={() => setShowAddSale(false)} />}
+      {showAddPayout && <AddPayoutModal artists={artists} getArtistStats={getArtistStats} onClose={() => setShowAddPayout(false)} />}
     </div>
   );
 }
 
-// ── Dashboard ──────────────────────────────────────────────────────────────────
+// ── Dashboard ─────────────────────────────────────────────────────────────────
 function Dashboard({ totalRevenue, totalCafe, totalOutstanding, totalPaid, artists, getArtistStats, setTab }) {
   return (
     <div className="page">
@@ -277,14 +253,8 @@ function Dashboard({ totalRevenue, totalCafe, totalOutstanding, totalPaid, artis
   );
 }
 
-// ── Sales Tab ──────────────────────────────────────────────────────────────────
-function SalesTab({ sales, artists, getArtistName, onAdd, db }) {
-  async function del(id) {
-    if (confirm("Delete this sale?")) {
-      const { doc, deleteDoc } = window.__firebase;
-      await deleteDoc(doc(db, "sales", id));
-    }
-  }
+// ── Sales ─────────────────────────────────────────────────────────────────────
+function SalesTab({ sales, artists, getArtistName, onAdd }) {
   return (
     <div className="page">
       <div className="page-header"><h2>Sales</h2><button className="btn-primary" onClick={onAdd}>+ Add Sale</button></div>
@@ -302,7 +272,7 @@ function SalesTab({ sales, artists, getArtistName, onAdd, db }) {
                   <td>{formatCurrency(s.price)}</td>
                   <td className="green">{formatCurrency(s.price * COMMISSION)}</td>
                   <td className="blue">{formatCurrency(s.price * (1-COMMISSION))}</td>
-                  <td><button className="btn-danger-sm" onClick={() => del(s.id)}>✕</button></td>
+                  <td><button className="btn-danger-sm" onClick={() => { if(confirm("Delete?")) db.collection("sales").doc(s.id).delete(); }}>✕</button></td>
                 </tr>
               ))}
             </tbody>
@@ -313,14 +283,8 @@ function SalesTab({ sales, artists, getArtistName, onAdd, db }) {
   );
 }
 
-// ── Artists Tab ────────────────────────────────────────────────────────────────
-function ArtistsTab({ artists, getArtistStats, onAdd, db }) {
-  async function del(id) {
-    if (confirm("Delete artist?")) {
-      const { doc, deleteDoc } = window.__firebase;
-      await deleteDoc(doc(db, "artists", id));
-    }
-  }
+// ── Artists ───────────────────────────────────────────────────────────────────
+function ArtistsTab({ artists, getArtistStats, onAdd }) {
   return (
     <div className="page">
       <div className="page-header"><h2>Artists</h2><button className="btn-primary" onClick={onAdd}>+ Add Artist</button></div>
@@ -337,7 +301,7 @@ function ArtistsTab({ artists, getArtistStats, onAdd, db }) {
                   {artist.email && <p className="muted">{artist.email}</p>}
                   {artist.notes && <p className="muted" style={{fontStyle:"italic"}}>{artist.notes}</p>}
                 </div>
-                <button className="btn-danger-sm ml-auto" onClick={() => del(artist.id)}>✕</button>
+                <button className="btn-danger-sm ml-auto" onClick={() => { if(confirm("Delete artist?")) db.collection("artists").doc(artist.id).delete(); }}>✕</button>
               </div>
               <div className="artist-stats">
                 <div className="mini-stat"><span>{stats.salesCount}</span><label>Sales</label></div>
@@ -357,14 +321,8 @@ function ArtistsTab({ artists, getArtistStats, onAdd, db }) {
   );
 }
 
-// ── Payouts Tab ────────────────────────────────────────────────────────────────
-function PayoutsTab({ payouts, artists, getArtistName, getArtistStats, onAdd, db }) {
-  async function del(id) {
-    if (confirm("Delete this payout?")) {
-      const { doc, deleteDoc } = window.__firebase;
-      await deleteDoc(doc(db, "payouts", id));
-    }
-  }
+// ── Payouts ───────────────────────────────────────────────────────────────────
+function PayoutsTab({ payouts, artists, getArtistName, getArtistStats, onAdd }) {
   const pending = artists.filter(a => getArtistStats(a.id).outstanding > 0.01);
   return (
     <div className="page">
@@ -395,7 +353,7 @@ function PayoutsTab({ payouts, artists, getArtistName, getArtistStats, onAdd, db
                   <td><strong>{getArtistName(p.artistId)}</strong></td>
                   <td className="blue">{formatCurrency(p.amount)}</td>
                   <td className="muted">{p.note || "—"}</td>
-                  <td><button className="btn-danger-sm" onClick={() => del(p.id)}>✕</button></td>
+                  <td><button className="btn-danger-sm" onClick={() => { if(confirm("Delete?")) db.collection("payouts").doc(p.id).delete(); }}>✕</button></td>
                 </tr>
               ))}
             </tbody>
@@ -406,7 +364,7 @@ function PayoutsTab({ payouts, artists, getArtistName, getArtistStats, onAdd, db
   );
 }
 
-// ── Modal wrapper ──────────────────────────────────────────────────────────────
+// ── Modal ─────────────────────────────────────────────────────────────────────
 function Modal({ title, onClose, children }) {
   return (
     <div className="modal-overlay" onClick={e => e.target===e.currentTarget && onClose()}>
@@ -421,8 +379,8 @@ function Modal({ title, onClose, children }) {
   );
 }
 
-// ── Add Artist ─────────────────────────────────────────────────────────────────
-function AddArtistModal({ db, onClose }) {
+// ── Add Artist ────────────────────────────────────────────────────────────────
+function AddArtistModal({ onClose }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
@@ -430,8 +388,7 @@ function AddArtistModal({ db, onClose }) {
   async function save() {
     if (!name.trim()) return;
     setSaving(true);
-    const { collection, addDoc, serverTimestamp } = window.__firebase;
-    await addDoc(collection(db, "artists"), { name: name.trim(), email, notes, createdAt: serverTimestamp() });
+    await db.collection("artists").add({ name: name.trim(), email, notes, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
     onClose();
   }
   return (
@@ -452,8 +409,8 @@ function AddArtistModal({ db, onClose }) {
   );
 }
 
-// ── Add Sale ───────────────────────────────────────────────────────────────────
-function AddSaleModal({ db, artists, onClose }) {
+// ── Add Sale ──────────────────────────────────────────────────────────────────
+function AddSaleModal({ artists, onClose }) {
   const [artistId, setArtistId] = useState(artists[0]?.id || "");
   const [item, setItem] = useState("");
   const [price, setPrice] = useState("");
@@ -462,8 +419,7 @@ function AddSaleModal({ db, artists, onClose }) {
   async function save() {
     if (!artistId || !item.trim() || !price) return;
     setSaving(true);
-    const { collection, addDoc, serverTimestamp } = window.__firebase;
-    await addDoc(collection(db, "sales"), { artistId, item: item.trim(), price: parseFloat(price), date: new Date(date), createdAt: serverTimestamp() });
+    await db.collection("sales").add({ artistId, item: item.trim(), price: parseFloat(price), date: new Date(date), createdAt: firebase.firestore.FieldValue.serverTimestamp() });
     onClose();
   }
   return (
@@ -494,8 +450,8 @@ function AddSaleModal({ db, artists, onClose }) {
   );
 }
 
-// ── Add Payout ─────────────────────────────────────────────────────────────────
-function AddPayoutModal({ db, artists, getArtistStats, onClose }) {
+// ── Add Payout ────────────────────────────────────────────────────────────────
+function AddPayoutModal({ artists, getArtistStats, onClose }) {
   const [artistId, setArtistId] = useState(artists[0]?.id || "");
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
@@ -505,8 +461,7 @@ function AddPayoutModal({ db, artists, getArtistStats, onClose }) {
   async function save() {
     if (!artistId || !amount) return;
     setSaving(true);
-    const { collection, addDoc, serverTimestamp } = window.__firebase;
-    await addDoc(collection(db, "payouts"), { artistId, amount: parseFloat(amount), note, date: new Date(date), createdAt: serverTimestamp() });
+    await db.collection("payouts").add({ artistId, amount: parseFloat(amount), note, date: new Date(date), createdAt: firebase.firestore.FieldValue.serverTimestamp() });
     onClose();
   }
   return (
@@ -537,7 +492,6 @@ function AddPayoutModal({ db, artists, getArtistStats, onClose }) {
   );
 }
 
-// ── Mount ──────────────────────────────────────────────────────────────────────
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 </body>
