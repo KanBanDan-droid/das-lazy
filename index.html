@@ -129,9 +129,22 @@
 </script>
 
 <script type="text/babel" data-presets="react">
-const { useState, useEffect, useRef } = React;
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect } = React;
 const COMMISSION = 0.30;
-const CONFIG_KEY = "dasLazyFirebaseConfig";
+
+// ── PASTE YOUR FIREBASE CONFIG HERE ───────────────────────────────────────────
+// Get these values from: Firebase Console → Project Settings → Your apps → SDK setup
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyCZUPk4_YCb0RUieWSzzq87gdqkkJ67_eM",
+  authDomain:        "das-lazy.firebaseapp.com",
+  projectId:         "das-lazy",
+  storageBucket:     "das-lazy.firebasestorage.app",
+  messagingSenderId: "831176176893",
+  appId:             "1:831176176893:web:18d75d5c46dc6aa2d13a94",
+};
+// ─────────────────────────────────────────────────────────────────────────────
 
 function formatCurrency(amount) {
   return new Intl.NumberFormat("de-AT", { style: "currency", currency: "EUR" }).format(amount || 0);
@@ -140,52 +153,6 @@ function formatDate(ts) {
   if (!ts) return "—";
   const d = ts.toDate ? ts.toDate() : new Date(ts);
   return d.toLocaleDateString("de-AT", { day: "2-digit", month: "2-digit", year: "numeric" });
-}
-
-// ── Config Screen ──────────────────────────────────────────────────────────────
-function ConfigScreen({ onSave }) {
-  const [cfg, setCfg] = useState({
-    apiKey: "", authDomain: "", projectId: "",
-    storageBucket: "", messagingSenderId: "", appId: ""
-  });
-  const fields = [
-    ["apiKey", "API Key"],
-    ["authDomain", "Auth Domain  (xxx.firebaseapp.com)"],
-    ["projectId", "Project ID"],
-    ["storageBucket", "Storage Bucket  (xxx.appspot.com)"],
-    ["messagingSenderId", "Messaging Sender ID"],
-    ["appId", "App ID"],
-  ];
-  const ready = Object.values(cfg).every(v => v.trim());
-  return (
-    <div style={{padding: "2rem 1.5rem"}}>
-      <div className="config-screen">
-        <h2>☕ Das Lazy Setup</h2>
-        <p>Paste your Firebase project config below. You only need to do this once — it's saved in your browser.</p>
-        <div className="form">
-          {fields.map(([key, label]) => (
-            <React.Fragment key={key}>
-              <label>{label}</label>
-              <input
-                value={cfg[key]}
-                onChange={e => setCfg(c => ({...c, [key]: e.target.value}))}
-                placeholder={label}
-                spellCheck={false}
-              />
-            </React.Fragment>
-          ))}
-          <div className="form-actions" style={{marginTop: "1rem"}}>
-            <button className="btn-primary" disabled={!ready} onClick={() => onSave(cfg)}>
-              Connect to Firebase →
-            </button>
-          </div>
-        </div>
-        <p style={{marginTop: "1.5rem", fontSize: "12px"}}>
-          Find your config in <strong>Firebase Console → Project Settings → Your apps → SDK setup</strong>
-        </p>
-      </div>
-    </div>
-  );
 }
 
 // ── Main App ───────────────────────────────────────────────────────────────────
@@ -200,40 +167,31 @@ function App() {
   const [showAddSale, setShowAddSale] = useState(false);
   const [showAddPayout, setShowAddPayout] = useState(false);
 
-  // Try to load saved config on mount
   useEffect(() => {
-    const saved = localStorage.getItem(CONFIG_KEY);
-    if (saved) initDb(JSON.parse(saved));
-    else setLoading(false);
-  }, []);
-
-  function initDb(config) {
     try {
       const { initializeApp, getFirestore } = window.__firebase;
-      const app = initializeApp(config, config.projectId);
-      const firestore = getFirestore(app);
-      localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
-      setDb(firestore);
+      const app = initializeApp(FIREBASE_CONFIG);
+      setDb(getFirestore(app));
     } catch(e) {
-      alert("Firebase connection failed. Check your config values.\n\n" + e.message);
+      alert("Firebase init failed: " + e.message);
       setLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     if (!db) return;
     const { collection, query, orderBy, onSnapshot } = window.__firebase;
-    const unsub1 = onSnapshot(collection(db, "artists"), snap => {
+    const u1 = onSnapshot(collection(db, "artists"), snap => {
       setArtists(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     });
-    const unsub2 = onSnapshot(query(collection(db, "sales"), orderBy("date", "desc")), snap => {
+    const u2 = onSnapshot(query(collection(db, "sales"), orderBy("date", "desc")), snap => {
       setSales(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     });
-    const unsub3 = onSnapshot(query(collection(db, "payouts"), orderBy("date", "desc")), snap => {
+    const u3 = onSnapshot(query(collection(db, "payouts"), orderBy("date", "desc")), snap => {
       setPayouts(snap.docs.map(d => ({ id: d.id, ...d.data() })));
       setLoading(false);
     });
-    return () => { unsub1(); unsub2(); unsub3(); };
+    return () => { u1(); u2(); u3(); };
   }, [db]);
 
   function getArtistName(id) { return artists.find(a => a.id === id)?.name || "Unknown"; }
@@ -248,7 +206,6 @@ function App() {
     return { totalRevenue, cafeCut, artistOwed, totalPaid, outstanding: artistOwed - totalPaid, salesCount: as.length };
   }
 
-  if (!db && !loading) return <ConfigScreen onSave={initDb} />;
   if (loading) return <div className="loading">Connecting to Firebase…</div>;
 
   const totalRevenue = sales.reduce((s, x) => s + x.price, 0);
