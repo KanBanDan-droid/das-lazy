@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Das Lazy – Artist Sales Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f2ed; --surface: #ffffff; --surface2: #faf8f5; --border: #e8e4de;
+      --text: #1a1614; --muted: #7a736b; --accent: #c45e2a; --accent-light: #fdf0e8;
+      --blue: #2563eb; --blue-light: #eff6ff; --green: #16a34a; --green-light: #f0fdf4;
+      --amber: #d97706; --amber-light: #fffbeb; --teal: #0891b2; --teal-light: #ecfeff;
+      --radius: 10px; --radius-sm: 6px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 15px; line-height: 1.6; }
+    .app { display: flex; flex-direction: column; min-height: 100vh; }
+    header { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+    .header-inner { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; height: 64px; display: flex; align-items: center; gap: 2rem; }
+    .logo { display: flex; align-items: center; gap: 12px; }
+    .logo-mark { font-size: 24px; }
+    .logo h1 { font-family: 'DM Serif Display', serif; font-size: 20px; font-weight: 400; color: var(--accent); line-height: 1.1; }
+    .logo p { font-size: 11px; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+    nav { display: flex; gap: 4px; margin-left: auto; }
+    .nav-btn { background: none; border: none; padding: 6px 14px; border-radius: var(--radius-sm); cursor: pointer; font-family: inherit; font-size: 14px; color: var(--muted); font-weight: 500; transition: all 0.15s; }
+    .nav-btn:hover { background: var(--bg); color: var(--text); }
+    .nav-btn.active { background: var(--accent-light); color: var(--accent); }
+    main { flex: 1; max-width: 1100px; margin: 0 auto; width: 100%; padding: 2rem 1.5rem; }
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+    .page-header h2 { font-family: 'DM Serif Display', serif; font-size: 26px; font-weight: 400; }
+    .section-header { margin: 2rem 0 1rem; }
+    .section-header h3 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 2rem; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
+    .stat-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 6px; }
+    .stat-value { font-size: 22px; font-weight: 600; }
+    .stat-blue .stat-value { color: var(--blue); }
+    .stat-green .stat-value { color: var(--green); }
+    .stat-teal .stat-value { color: var(--teal); }
+    .stat-amber .stat-value { color: var(--amber); }
+    .artist-cards { display: flex; flex-direction: column; gap: 8px; }
+    .artist-summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: box-shadow 0.15s, border-color 0.15s; }
+    .artist-summary-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.10); border-color: #d4cfc9; }
+    .artist-summary-info { flex: 1; display: flex; flex-direction: column; }
+    .artist-summary-info strong { font-size: 15px; }
+    .artist-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--accent-light); color: var(--accent); font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .artist-avatar.large { width: 48px; height: 48px; font-size: 16px; }
+    .badge { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+    .badge-amber { background: var(--amber-light); color: var(--amber); }
+    .badge-green { background: var(--green-light); color: var(--green); }
+    .artist-list { display: flex; flex-direction: column; gap: 16px; }
+    .artist-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
+    .artist-card-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+    .artist-card-top h3 { font-size: 16px; font-weight: 600; }
+    .ml-auto { margin-left: auto; }
+    .artist-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 12px; }
+    .mini-stat { display: flex; flex-direction: column; }
+    .mini-stat span { font-size: 15px; font-weight: 600; }
+    .mini-stat label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .mini-stat.amber span { color: var(--amber); }
+    .mini-stat.green span { color: var(--green); }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+    th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); background: var(--surface2); border-bottom: 1px solid var(--border); }
+    td { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 14px; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg); }
+    td.green { color: var(--green); font-weight: 500; }
+    td.blue { color: var(--blue); font-weight: 500; }
+    .payout-pending { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 1rem; }
+    .pending-card { background: var(--amber-light); border: 1px solid #fde68a; border-radius: var(--radius); padding: 0.75rem 1rem; display: flex; align-items: center; gap: 10px; min-width: 220px; }
+    .pending-card .amber { color: var(--amber); font-weight: 600; }
+    .btn-primary { background: var(--accent); color: white; border: none; padding: 8px 18px; border-radius: var(--radius-sm); font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.15s; }
+    .btn-primary:hover { background: #b0521f; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); padding: 8px 18px; border-radius: var(--radius-sm); font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer; }
+    .btn-secondary:hover { background: var(--bg); }
+    .btn-danger-sm { background: none; border: none; color: #ccc; cursor: pointer; font-size: 13px; padding: 4px 6px; border-radius: 4px; transition: color 0.15s, background 0.15s; }
+    .btn-danger-sm:hover { background: #fee2e2; color: #dc2626; }
+    .btn-link { background: none; border: none; color: var(--accent); cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 0; margin-left: 8px; text-decoration: underline; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 1rem; }
+    .modal { background: var(--surface); border-radius: var(--radius); width: 100%; max-width: 460px; box-shadow: 0 4px 16px rgba(0,0,0,0.10); }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
+    .modal-header h3 { font-size: 17px; font-weight: 600; }
+    .modal-close { background: none; border: none; cursor: pointer; font-size: 16px; color: var(--muted); padding: 4px; border-radius: 4px; }
+    .modal-close:hover { background: var(--bg); }
+    .form { padding: 1.5rem; display: flex; flex-direction: column; gap: 8px; }
+    .form label { font-size: 13px; font-weight: 600; color: var(--muted); margin-top: 4px; }
+    .form input, .form select, .form textarea { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 12px; font-family: inherit; font-size: 14px; background: var(--surface); color: var(--text); width: 100%; }
+    .form input:focus, .form select:focus, .form textarea:focus { outline: none; border-color: var(--accent); }
+    .form textarea { resize: vertical; }
+    .form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+    .price-preview { background: var(--bg); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 13px; display: flex; gap: 16px; color: var(--muted); }
+    .price-preview strong { color: var(--text); }
+    .outstanding-hint { font-size: 13px; color: var(--muted); padding: 6px 0; }
+    .empty { color: var(--muted); font-size: 14px; font-style: italic; padding: 1rem 0; }
+    .muted { color: var(--muted); font-size: 13px; }
+    .loading { text-align: center; padding: 4rem; color: var(--muted); font-size: 16px; }
+    .config-screen { max-width: 560px; margin: 4rem auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; }
+    .config-screen h2 { font-family: 'DM Serif Display', serif; font-size: 24px; font-weight: 400; margin-bottom: 0.5rem; }
+    .config-screen p { color: var(--muted); font-size: 14px; margin-bottom: 1.5rem; }
+    .config-screen .form label { font-size: 13px; font-weight: 600; color: var(--muted); }
+    @media (max-width: 640px) {
+      .header-inner { padding: 0 1rem; gap: 0.75rem; }
+      .nav-btn { padding: 6px 10px; font-size: 13px; }
+      main { padding: 1.25rem 1rem; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- React + Babel (no build step) -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import {
+    getFirestore, collection, addDoc, doc,
+    query, orderBy, onSnapshot, deleteDoc, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  window.__firebase = { initializeApp, getFirestore, collection, addDoc, doc, query, orderBy, onSnapshot, deleteDoc, serverTimestamp };
+</script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef } = React;
+const COMMISSION = 0.30;
+const CONFIG_KEY = "dasLazyFirebaseConfig";
+
+function formatCurrency(amount) {
+  return new Intl.NumberFormat("de-AT", { style: "currency", currency: "EUR" }).format(amount || 0);
+}
+function formatDate(ts) {
+  if (!ts) return "—";
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString("de-AT", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+// ── Config Screen ──────────────────────────────────────────────────────────────
+function ConfigScreen({ onSave }) {
+  const [cfg, setCfg] = useState({
+    apiKey: "", authDomain: "", projectId: "",
+    storageBucket: "", messagingSenderId: "", appId: ""
+  });
+  const fields = [
+    ["apiKey", "API Key"],
+    ["authDomain", "Auth Domain  (xxx.firebaseapp.com)"],
+    ["projectId", "Project ID"],
+    ["storageBucket", "Storage Bucket  (xxx.appspot.com)"],
+    ["messagingSenderId", "Messaging Sender ID"],
+    ["appId", "App ID"],
+  ];
+  const ready = Object.values(cfg).every(v => v.trim());
+  return (
+    <div style={{padding: "2rem 1.5rem"}}>
+      <div className="config-screen">
+        <h2>☕ Das Lazy Setup</h2>
+        <p>Paste your Firebase project config below. You only need to do this once — it's saved in your browser.</p>
+        <div className="form">
+          {fields.map(([key, label]) => (
+            <React.Fragment key={key}>
+              <label>{label}</label>
+              <input
+                value={cfg[key]}
+                onChange={e => setCfg(c => ({...c, [key]: e.target.value}))}
+                placeholder={label}
+                spellCheck={false}
+              />
+            </React.Fragment>
+          ))}
+          <div className="form-actions" style={{marginTop: "1rem"}}>
+            <button className="btn-primary" disabled={!ready} onClick={() => onSave(cfg)}>
+              Connect to Firebase →
+            </button>
+          </div>
+        </div>
+        <p style={{marginTop: "1.5rem", fontSize: "12px"}}>
+          Find your config in <strong>Firebase Console → Project Settings → Your apps → SDK setup</strong>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── Main App ───────────────────────────────────────────────────────────────────
+function App() {
+  const [db, setDb] = useState(null);
+  const [tab, setTab] = useState("dashboard");
+  const [artists, setArtists] = useState([]);
+  const [sales, setSales] = useState([]);
+  const [payouts, setPayouts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddArtist, setShowAddArtist] = useState(false);
+  const [showAddSale, setShowAddSale] = useState(false);
+  const [showAddPayout, setShowAddPayout] = useState(false);
+
+  // Try to load saved config on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(CONFIG_KEY);
+    if (saved) initDb(JSON.parse(saved));
+    else setLoading(false);
+  }, []);
+
+  function initDb(config) {
+    try {
+      const { initializeApp, getFirestore } = window.__firebase;
+      const app = initializeApp(config, config.projectId);
+      const firestore = getFirestore(app);
+      localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+      setDb(firestore);
+    } catch(e) {
+      alert("Firebase connection failed. Check your config values.\n\n" + e.message);
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!db) return;
+    const { collection, query, orderBy, onSnapshot } = window.__firebase;
+    const unsub1 = onSnapshot(collection(db, "artists"), snap => {
+      setArtists(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+    const unsub2 = onSnapshot(query(collection(db, "sales"), orderBy("date", "desc")), snap => {
+      setSales(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+    const unsub3 = onSnapshot(query(collection(db, "payouts"), orderBy("date", "desc")), snap => {
+      setPayouts(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      setLoading(false);
+    });
+    return () => { unsub1(); unsub2(); unsub3(); };
+  }, [db]);
+
+  function getArtistName(id) { return artists.find(a => a.id === id)?.name || "Unknown"; }
+
+  function getArtistStats(artistId) {
+    const as = sales.filter(s => s.artistId === artistId);
+    const ap = payouts.filter(p => p.artistId === artistId);
+    const totalRevenue = as.reduce((s, x) => s + x.price, 0);
+    const cafeCut = totalRevenue * COMMISSION;
+    const artistOwed = totalRevenue - cafeCut;
+    const totalPaid = ap.reduce((s, x) => s + x.amount, 0);
+    return { totalRevenue, cafeCut, artistOwed, totalPaid, outstanding: artistOwed - totalPaid, salesCount: as.length };
+  }
+
+  if (!db && !loading) return <ConfigScreen onSave={initDb} />;
+  if (loading) return <div className="loading">Connecting to Firebase…</div>;
+
+  const totalRevenue = sales.reduce((s, x) => s + x.price, 0);
+  const totalCafe = totalRevenue * COMMISSION;
+  const totalPaid = payouts.reduce((s, x) => s + x.amount, 0);
+  const totalOutstanding = (totalRevenue - totalCafe) - totalPaid;
+
+  return (
+    <div className="app">
+      <header>
+        <div className="header-inner">
+          <div className="logo">
+            <span className="logo-mark">☕</span>
+            <div><h1>Das Lazy</h1><p>Artist Sales Tracker</p></div>
+          </div>
+          <nav>
+            {["dashboard","sales","artists","payouts"].map(t => (
+              <button key={t} className={`nav-btn ${tab===t?"active":""}`} onClick={() => setTab(t)}>
+                {t[0].toUpperCase()+t.slice(1)}
+              </button>
+            ))}
+          </nav>
+        </div>
+      </header>
+      <main>
+        {tab==="dashboard" && <Dashboard totalRevenue={totalRevenue} totalCafe={totalCafe} totalOutstanding={totalOutstanding} totalPaid={totalPaid} artists={artists} getArtistStats={getArtistStats} setTab={setTab} />}
+        {tab==="sales"     && <SalesTab sales={sales} artists={artists} getArtistName={getArtistName} onAdd={() => setShowAddSale(true)} db={db} />}
+        {tab==="artists"   && <ArtistsTab artists={artists} getArtistStats={getArtistStats} onAdd={() => setShowAddArtist(true)} db={db} />}
+        {tab==="payouts"   && <PayoutsTab payouts={payouts} artists={artists} getArtistName={getArtistName} getArtistStats={getArtistStats} onAdd={() => setShowAddPayout(true)} db={db} />}
+      </main>
+      {showAddArtist && <AddArtistModal db={db} onClose={() => setShowAddArtist(false)} />}
+      {showAddSale   && <AddSaleModal db={db} artists={artists} onClose={() => setShowAddSale(false)} />}
+      {showAddPayout && <AddPayoutModal db={db} artists={artists} getArtistStats={getArtistStats} onClose={() => setShowAddPayout(false)} />}
+    </div>
+  );
+}
+
+// ── Dashboard ──────────────────────────────────────────────────────────────────
+function Dashboard({ totalRevenue, totalCafe, totalOutstanding, totalPaid, artists, getArtistStats, setTab }) {
+  return (
+    <div className="page">
+      <div className="page-header"><h2>Overview</h2></div>
+      <div className="stats-grid">
+        <div className="stat-card stat-blue"><p className="stat-label">Total Sales Revenue</p><p className="stat-value">{formatCurrency(totalRevenue)}</p></div>
+        <div className="stat-card stat-green"><p className="stat-label">Café Commission (30%)</p><p className="stat-value">{formatCurrency(totalCafe)}</p></div>
+        <div className="stat-card stat-teal"><p className="stat-label">Paid to Artists</p><p className="stat-value">{formatCurrency(totalPaid)}</p></div>
+        <div className={`stat-card stat-${totalOutstanding > 0 ? "amber" : "green"}`}><p className="stat-label">Outstanding to Artists</p><p className="stat-value">{formatCurrency(totalOutstanding)}</p></div>
+      </div>
+      <div className="section-header"><h3>Artists at a glance</h3></div>
+      <div className="artist-cards">
+        {artists.length === 0 && <p className="empty">No artists yet. Add one in the Artists tab.</p>}
+        {artists.map(artist => {
+          const stats = getArtistStats(artist.id);
+          return (
+            <div key={artist.id} className="artist-summary-card" onClick={() => setTab("artists")}>
+              <div className="artist-avatar">{artist.name.slice(0,2).toUpperCase()}</div>
+              <div className="artist-summary-info">
+                <strong>{artist.name}</strong>
+                <span className="muted">{stats.salesCount} sales · {formatCurrency(stats.totalRevenue)}</span>
+              </div>
+              <div className={`badge ${stats.outstanding > 0.01 ? "badge-amber" : "badge-green"}`}>
+                {stats.outstanding > 0.01 ? `Owes ${formatCurrency(stats.outstanding)}` : "Settled"}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Sales Tab ──────────────────────────────────────────────────────────────────
+function SalesTab({ sales, artists, getArtistName, onAdd, db }) {
+  async function del(id) {
+    if (confirm("Delete this sale?")) {
+      const { doc, deleteDoc } = window.__firebase;
+      await deleteDoc(doc(db, "sales", id));
+    }
+  }
+  return (
+    <div className="page">
+      <div className="page-header"><h2>Sales</h2><button className="btn-primary" onClick={onAdd}>+ Add Sale</button></div>
+      {sales.length === 0 && <p className="empty">No sales recorded yet.</p>}
+      {sales.length > 0 && (
+        <div className="table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Artist</th><th>Item</th><th>Price</th><th>Café (30%)</th><th>Artist (70%)</th><th></th></tr></thead>
+            <tbody>
+              {sales.map(s => (
+                <tr key={s.id}>
+                  <td className="muted">{formatDate(s.date)}</td>
+                  <td><strong>{getArtistName(s.artistId)}</strong></td>
+                  <td>{s.item}</td>
+                  <td>{formatCurrency(s.price)}</td>
+                  <td className="green">{formatCurrency(s.price * COMMISSION)}</td>
+                  <td className="blue">{formatCurrency(s.price * (1-COMMISSION))}</td>
+                  <td><button className="btn-danger-sm" onClick={() => del(s.id)}>✕</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Artists Tab ────────────────────────────────────────────────────────────────
+function ArtistsTab({ artists, getArtistStats, onAdd, db }) {
+  async function del(id) {
+    if (confirm("Delete artist?")) {
+      const { doc, deleteDoc } = window.__firebase;
+      await deleteDoc(doc(db, "artists", id));
+    }
+  }
+  return (
+    <div className="page">
+      <div className="page-header"><h2>Artists</h2><button className="btn-primary" onClick={onAdd}>+ Add Artist</button></div>
+      {artists.length === 0 && <p className="empty">No artists yet.</p>}
+      <div className="artist-list">
+        {artists.map(artist => {
+          const stats = getArtistStats(artist.id);
+          return (
+            <div key={artist.id} className="artist-card">
+              <div className="artist-card-top">
+                <div className="artist-avatar large">{artist.name.slice(0,2).toUpperCase()}</div>
+                <div>
+                  <h3>{artist.name}</h3>
+                  {artist.email && <p className="muted">{artist.email}</p>}
+                  {artist.notes && <p className="muted" style={{fontStyle:"italic"}}>{artist.notes}</p>}
+                </div>
+                <button className="btn-danger-sm ml-auto" onClick={() => del(artist.id)}>✕</button>
+              </div>
+              <div className="artist-stats">
+                <div className="mini-stat"><span>{stats.salesCount}</span><label>Sales</label></div>
+                <div className="mini-stat"><span>{formatCurrency(stats.totalRevenue)}</span><label>Revenue</label></div>
+                <div className="mini-stat"><span>{formatCurrency(stats.cafeCut)}</span><label>Café cut</label></div>
+                <div className="mini-stat"><span>{formatCurrency(stats.artistOwed)}</span><label>Artist total</label></div>
+                <div className="mini-stat"><span>{formatCurrency(stats.totalPaid)}</span><label>Paid out</label></div>
+                <div className={`mini-stat ${stats.outstanding > 0.01 ? "amber" : "green"}`}>
+                  <span>{formatCurrency(stats.outstanding)}</span><label>Outstanding</label>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Payouts Tab ────────────────────────────────────────────────────────────────
+function PayoutsTab({ payouts, artists, getArtistName, getArtistStats, onAdd, db }) {
+  async function del(id) {
+    if (confirm("Delete this payout?")) {
+      const { doc, deleteDoc } = window.__firebase;
+      await deleteDoc(doc(db, "payouts", id));
+    }
+  }
+  const pending = artists.filter(a => getArtistStats(a.id).outstanding > 0.01);
+  return (
+    <div className="page">
+      <div className="page-header"><h2>Payouts</h2><button className="btn-primary" onClick={onAdd}>+ Record Payout</button></div>
+      <div className="section-header"><h3>Pending payouts</h3></div>
+      <div className="payout-pending">
+        {pending.length === 0 && <p className="empty">All artists are settled up! 🎉</p>}
+        {pending.map(artist => {
+          const stats = getArtistStats(artist.id);
+          return (
+            <div key={artist.id} className="pending-card">
+              <div className="artist-avatar">{artist.name.slice(0,2).toUpperCase()}</div>
+              <div><strong>{artist.name}</strong><p className="muted">Owed: <span className="amber">{formatCurrency(stats.outstanding)}</span></p></div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="section-header"><h3>Payout history</h3></div>
+      {payouts.length === 0 && <p className="empty">No payouts recorded yet.</p>}
+      {payouts.length > 0 && (
+        <div className="table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Artist</th><th>Amount</th><th>Note</th><th></th></tr></thead>
+            <tbody>
+              {payouts.map(p => (
+                <tr key={p.id}>
+                  <td className="muted">{formatDate(p.date)}</td>
+                  <td><strong>{getArtistName(p.artistId)}</strong></td>
+                  <td className="blue">{formatCurrency(p.amount)}</td>
+                  <td className="muted">{p.note || "—"}</td>
+                  <td><button className="btn-danger-sm" onClick={() => del(p.id)}>✕</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Modal wrapper ──────────────────────────────────────────────────────────────
+function Modal({ title, onClose, children }) {
+  return (
+    <div className="modal-overlay" onClick={e => e.target===e.currentTarget && onClose()}>
+      <div className="modal">
+        <div className="modal-header">
+          <h3>{title}</h3>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ── Add Artist ─────────────────────────────────────────────────────────────────
+function AddArtistModal({ db, onClose }) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [notes, setNotes] = useState("");
+  const [saving, setSaving] = useState(false);
+  async function save() {
+    if (!name.trim()) return;
+    setSaving(true);
+    const { collection, addDoc, serverTimestamp } = window.__firebase;
+    await addDoc(collection(db, "artists"), { name: name.trim(), email, notes, createdAt: serverTimestamp() });
+    onClose();
+  }
+  return (
+    <Modal title="Add Artist" onClose={onClose}>
+      <div className="form">
+        <label>Name *</label>
+        <input value={name} onChange={e => setName(e.target.value)} placeholder="Artist name" autoFocus />
+        <label>Email</label>
+        <input value={email} onChange={e => setEmail(e.target.value)} placeholder="artist@email.com" type="email" />
+        <label>Notes</label>
+        <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Any notes…" rows={3} />
+        <div className="form-actions">
+          <button className="btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn-primary" onClick={save} disabled={saving || !name.trim()}>{saving ? "Saving…" : "Add Artist"}</button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// ── Add Sale ───────────────────────────────────────────────────────────────────
+function AddSaleModal({ db, artists, onClose }) {
+  const [artistId, setArtistId] = useState(artists[0]?.id || "");
+  const [item, setItem] = useState("");
+  const [price, setPrice] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().slice(0,10));
+  const [saving, setSaving] = useState(false);
+  async function save() {
+    if (!artistId || !item.trim() || !price) return;
+    setSaving(true);
+    const { collection, addDoc, serverTimestamp } = window.__firebase;
+    await addDoc(collection(db, "sales"), { artistId, item: item.trim(), price: parseFloat(price), date: new Date(date), createdAt: serverTimestamp() });
+    onClose();
+  }
+  return (
+    <Modal title="Add Sale" onClose={onClose}>
+      <div className="form">
+        <label>Artist *</label>
+        <select value={artistId} onChange={e => setArtistId(e.target.value)}>
+          {artists.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+        </select>
+        <label>Item / Description *</label>
+        <input value={item} onChange={e => setItem(e.target.value)} placeholder="e.g. Print, Painting, Mug…" autoFocus />
+        <label>Sale Price (€) *</label>
+        <input value={price} onChange={e => setPrice(e.target.value)} type="number" min="0" step="0.01" placeholder="0.00" />
+        {price && (
+          <div className="price-preview">
+            <span>Café keeps: <strong>{formatCurrency(parseFloat(price) * COMMISSION)}</strong></span>
+            <span>Artist gets: <strong>{formatCurrency(parseFloat(price) * (1-COMMISSION))}</strong></span>
+          </div>
+        )}
+        <label>Date *</label>
+        <input value={date} onChange={e => setDate(e.target.value)} type="date" />
+        <div className="form-actions">
+          <button className="btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn-primary" onClick={save} disabled={saving || !artistId || !item.trim() || !price}>{saving ? "Saving…" : "Record Sale"}</button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// ── Add Payout ─────────────────────────────────────────────────────────────────
+function AddPayoutModal({ db, artists, getArtistStats, onClose }) {
+  const [artistId, setArtistId] = useState(artists[0]?.id || "");
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().slice(0,10));
+  const [saving, setSaving] = useState(false);
+  const stats = artistId ? getArtistStats(artistId) : null;
+  async function save() {
+    if (!artistId || !amount) return;
+    setSaving(true);
+    const { collection, addDoc, serverTimestamp } = window.__firebase;
+    await addDoc(collection(db, "payouts"), { artistId, amount: parseFloat(amount), note, date: new Date(date), createdAt: serverTimestamp() });
+    onClose();
+  }
+  return (
+    <Modal title="Record Payout" onClose={onClose}>
+      <div className="form">
+        <label>Artist *</label>
+        <select value={artistId} onChange={e => setArtistId(e.target.value)}>
+          {artists.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+        </select>
+        {stats && (
+          <div className="outstanding-hint">
+            Outstanding: <strong>{formatCurrency(stats.outstanding)}</strong>
+            {stats.outstanding > 0.01 && <button className="btn-link" onClick={() => setAmount(stats.outstanding.toFixed(2))}>Use this amount</button>}
+          </div>
+        )}
+        <label>Amount (€) *</label>
+        <input value={amount} onChange={e => setAmount(e.target.value)} type="number" min="0" step="0.01" placeholder="0.00" />
+        <label>Note</label>
+        <input value={note} onChange={e => setNote(e.target.value)} placeholder="e.g. Bank transfer, cash…" />
+        <label>Date *</label>
+        <input value={date} onChange={e => setDate(e.target.value)} type="date" />
+        <div className="form-actions">
+          <button className="btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn-primary" onClick={save} disabled={saving || !artistId || !amount}>{saving ? "Saving…" : "Record Payout"}</button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// ── Mount ──────────────────────────────────────────────────────────────────────
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
