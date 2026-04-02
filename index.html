@@ -85,6 +85,11 @@
     .mini-stat.amber span { color: var(--amber); }
     .mini-stat.green span { color: var(--green); }
 
+    /* commission badge on artist card */
+    .commission-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--accent-light); color: var(--accent); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; margin-top: 3px; }
+    .btn-edit-commission { background: none; border: 1px solid var(--border); color: var(--muted); cursor: pointer; font-family: inherit; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; margin-top: 3px; margin-left: 4px; min-height: 0; }
+    .btn-edit-commission:hover { border-color: var(--accent); color: var(--accent); }
+
     /* ── TABLE (desktop) ── */
     .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
@@ -144,6 +149,11 @@
     .price-preview strong { color: var(--text); }
     .outstanding-hint { font-size: 13px; color: var(--muted); padding: 4px 0; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
 
+    /* commission input row */
+    .commission-row { display: flex; align-items: center; gap: 8px; }
+    .commission-row input { flex: 1; }
+    .commission-row .pct-label { font-size: 14px; color: var(--muted); font-weight: 500; white-space: nowrap; }
+
     /* ── MISC ── */
     .empty { color: var(--muted); font-size: 14px; font-style: italic; padding: 1rem 0; }
     .muted { color: var(--muted); font-size: 13px; }
@@ -194,7 +204,7 @@
 
 <script type="text/babel" data-presets="react">
 const { useState, useEffect } = React;
-const COMMISSION = 0.30;
+const DEFAULT_COMMISSION = 0.30;
 
 // ── PASTE YOUR FIREBASE CONFIG HERE ──────────────────────────────────────────
 const FIREBASE_CONFIG = {
@@ -217,6 +227,9 @@ function fmtDate(ts) {
   if (!ts) return "—";
   const d = ts.toDate ? ts.toDate() : new Date(ts);
   return d.toLocaleDateString("de-AT", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+function fmtPct(rate) {
+  return (rate * 100).toFixed(0) + "%";
 }
 
 const NAV = [
@@ -246,22 +259,37 @@ function App() {
     return () => { u1(); u2(); u3(); };
   }, []);
 
-  function artistName(id) { return artists.find(a => a.id === id)?.name || "Unknown"; }
+  function getArtist(id) { return artists.find(a => a.id === id); }
+  function artistName(id) { return getArtist(id)?.name || "Unknown"; }
+  function artistCommission(id) {
+    const a = getArtist(id);
+    // support commission stored as 0–100 (percent) or 0–1 (fraction); default 30%
+    if (a?.commission != null) {
+      const v = parseFloat(a.commission);
+      return v > 1 ? v / 100 : v;
+    }
+    return DEFAULT_COMMISSION;
+  }
 
   function artistStats(artistId) {
+    const commission = artistCommission(artistId);
     const as = sales.filter(s => s.artistId === artistId);
     const ap = payouts.filter(p => p.artistId === artistId);
     const rev = as.reduce((s, x) => s + x.price, 0);
-    const cafe = rev * COMMISSION;
+    const cafe = rev * commission;
     const owed = rev - cafe;
     const paid = ap.reduce((s, x) => s + x.amount, 0);
-    return { totalRevenue: rev, cafeCut: cafe, artistOwed: owed, totalPaid: paid, outstanding: owed - paid, salesCount: as.length };
+    return { totalRevenue: rev, cafeCut: cafe, artistOwed: owed, totalPaid: paid, outstanding: owed - paid, salesCount: as.length, commission };
   }
 
   if (loading) return <div className="loading">Loading…</div>;
 
   const totalRev = sales.reduce((s, x) => s + x.price, 0);
-  const totalCafe = totalRev * COMMISSION;
+  const totalCafe = artists.reduce((sum, a) => {
+    const as = sales.filter(s => s.artistId === a.id);
+    const rate = artistCommission(a.id);
+    return sum + as.reduce((s, x) => s + x.price * rate, 0);
+  }, 0);
   const totalPaid = payouts.reduce((s, x) => s + x.amount, 0);
   const totalOut = (totalRev - totalCafe) - totalPaid;
 
@@ -285,7 +313,7 @@ function App() {
 
       <main>
         {tab==="dashboard" && <Dashboard totalRev={totalRev} totalCafe={totalCafe} totalOut={totalOut} totalPaid={totalPaid} artists={artists} artistStats={artistStats} setTab={setTab} onAddSale={() => setModal("sale")} />}
-        {tab==="sales"     && <SalesTab sales={sales} artistName={artistName} onAdd={() => setModal("sale")} />}
+        {tab==="sales"     && <SalesTab sales={sales} artists={artists} artistName={artistName} artistCommission={artistCommission} onAdd={() => setModal("sale")} />}
         {tab==="artists"   && <ArtistsTab artists={artists} artistStats={artistStats} onAdd={() => setModal("artist")} />}
         {tab==="payouts"   && <PayoutsTab payouts={payouts} artists={artists} artistName={artistName} artistStats={artistStats} onAdd={() => setModal("payout")} />}
       </main>
@@ -302,7 +330,7 @@ function App() {
       </nav>
 
       {modal==="artist" && <AddArtistModal onClose={() => setModal(null)} />}
-      {modal==="sale"   && <AddSaleModal artists={artists} onClose={() => setModal(null)} />}
+      {modal==="sale"   && <AddSaleModal artists={artists} artistCommission={artistCommission} onClose={() => setModal(null)} />}
       {modal==="payout" && <AddPayoutModal artists={artists} artistStats={artistStats} onClose={() => setModal(null)} />}
     </div>
   );
@@ -317,7 +345,7 @@ function Dashboard({ totalRev, totalCafe, totalOut, totalPaid, artists, artistSt
       </div>
       <div className="stats-grid">
         <div className="stat-card stat-blue"><p className="stat-label">Revenue</p><p className="stat-value">{fmt(totalRev)}</p></div>
-        <div className="stat-card stat-green"><p className="stat-label">Café (30%)</p><p className="stat-value">{fmt(totalCafe)}</p></div>
+        <div className="stat-card stat-green"><p className="stat-label">Café cut</p><p className="stat-value">{fmt(totalCafe)}</p></div>
         <div className="stat-card stat-teal"><p className="stat-label">Paid out</p><p className="stat-value">{fmt(totalPaid)}</p></div>
         <div className={`stat-card stat-${totalOut > 0 ? "amber" : "green"}`}><p className="stat-label">Outstanding</p><p className="stat-value">{fmt(totalOut)}</p></div>
       </div>
@@ -331,7 +359,7 @@ function Dashboard({ totalRev, totalCafe, totalOut, totalPaid, artists, artistSt
               <div className="artist-avatar">{a.name.slice(0,2).toUpperCase()}</div>
               <div className="artist-summary-info">
                 <strong>{a.name}</strong>
-                <span className="muted">{s.salesCount} sales · {fmt(s.totalRevenue)}</span>
+                <span className="muted">{s.salesCount} sales · {fmt(s.totalRevenue)} · café {fmtPct(s.commission)}</span>
               </div>
               <div className={`badge ${s.outstanding > 0.01 ? "badge-amber" : "badge-green"}`}>
                 {s.outstanding > 0.01 ? fmt(s.outstanding) : "Settled"}
@@ -344,49 +372,55 @@ function Dashboard({ totalRev, totalCafe, totalOut, totalPaid, artists, artistSt
   );
 }
 
-function SalesTab({ sales, artistName, onAdd }) {
+function SalesTab({ sales, artists, artistName, artistCommission, onAdd }) {
   const del = id => { if(confirm("Delete this sale?")) db.collection("sales").doc(id).delete(); };
   return (
     <div className="page">
       <div className="page-header"><h2>Sales</h2><button className="btn-primary" onClick={onAdd}>+ Add Sale</button></div>
       {sales.length === 0 && <p className="empty">No sales recorded yet.</p>}
       <div className="sale-cards">
-        {sales.map(s => (
-          <div key={s.id} className="sale-card">
-            <div className="sale-card-top">
-              <div>
-                <div className="sale-card-artist">{artistName(s.artistId)}</div>
-                <div className="sale-card-item">{s.item}</div>
+        {sales.map(s => {
+          const rate = artistCommission(s.artistId);
+          return (
+            <div key={s.id} className="sale-card">
+              <div className="sale-card-top">
+                <div>
+                  <div className="sale-card-artist">{artistName(s.artistId)}</div>
+                  <div className="sale-card-item">{s.item}</div>
+                </div>
+                <div className="sale-card-meta">
+                  <span className="sale-card-date">{fmtDate(s.date)}</span>
+                  <button className="btn-danger-sm" onClick={() => del(s.id)}>✕</button>
+                </div>
               </div>
-              <div className="sale-card-meta">
-                <span className="sale-card-date">{fmtDate(s.date)}</span>
-                <button className="btn-danger-sm" onClick={() => del(s.id)}>✕</button>
+              <div className="sale-card-amounts">
+                <div className="amt"><label>Total</label><span className="amt-total">{fmt(s.price)}</span></div>
+                <div className="amt"><label>Café ({fmtPct(rate)})</label><span className="amt-cafe">{fmt(s.price * rate)}</span></div>
+                <div className="amt"><label>Artist ({fmtPct(1-rate)})</label><span className="amt-artist">{fmt(s.price * (1-rate))}</span></div>
               </div>
             </div>
-            <div className="sale-card-amounts">
-              <div className="amt"><label>Total</label><span className="amt-total">{fmt(s.price)}</span></div>
-              <div className="amt"><label>Café</label><span className="amt-cafe">{fmt(s.price * COMMISSION)}</span></div>
-              <div className="amt"><label>Artist</label><span className="amt-artist">{fmt(s.price * (1-COMMISSION))}</span></div>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       <div className="table-wrap">
         {sales.length > 0 && (
           <table>
-            <thead><tr><th>Date</th><th>Artist</th><th>Item</th><th>Price</th><th>Café (30%)</th><th>Artist (70%)</th><th></th></tr></thead>
+            <thead><tr><th>Date</th><th>Artist</th><th>Item</th><th>Price</th><th>Café</th><th>Artist</th><th></th></tr></thead>
             <tbody>
-              {sales.map(s => (
-                <tr key={s.id}>
-                  <td className="muted">{fmtDate(s.date)}</td>
-                  <td><strong>{artistName(s.artistId)}</strong></td>
-                  <td>{s.item}</td>
-                  <td>{fmt(s.price)}</td>
-                  <td className="green">{fmt(s.price * COMMISSION)}</td>
-                  <td className="blue">{fmt(s.price * (1-COMMISSION))}</td>
-                  <td><button className="btn-danger-sm" onClick={() => del(s.id)}>✕</button></td>
-                </tr>
-              ))}
+              {sales.map(s => {
+                const rate = artistCommission(s.artistId);
+                return (
+                  <tr key={s.id}>
+                    <td className="muted">{fmtDate(s.date)}</td>
+                    <td><strong>{artistName(s.artistId)}</strong></td>
+                    <td>{s.item}</td>
+                    <td>{fmt(s.price)}</td>
+                    <td className="green">{fmt(s.price * rate)} <span style={{fontSize:11,opacity:0.7}}>({fmtPct(rate)})</span></td>
+                    <td className="blue">{fmt(s.price * (1-rate))} <span style={{fontSize:11,opacity:0.7}}>({fmtPct(1-rate)})</span></td>
+                    <td><button className="btn-danger-sm" onClick={() => del(s.id)}>✕</button></td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
@@ -396,6 +430,7 @@ function SalesTab({ sales, artistName, onAdd }) {
 }
 
 function ArtistsTab({ artists, artistStats, onAdd }) {
+  const [editingCommission, setEditingCommission] = useState(null);
   return (
     <div className="page">
       <div className="page-header"><h2>Artists</h2><button className="btn-primary" onClick={onAdd}>+ Add Artist</button></div>
@@ -409,7 +444,11 @@ function ArtistsTab({ artists, artistStats, onAdd }) {
                 <div className="artist-avatar large">{a.name.slice(0,2).toUpperCase()}</div>
                 <div style={{flex:1,minWidth:0}}>
                   <h3>{a.name}</h3>
-                  {a.email && <p className="muted">{a.email}</p>}
+                  <div style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:4,marginTop:2}}>
+                    <span className="commission-badge">☕ {fmtPct(s.commission)} café</span>
+                    <button className="btn-edit-commission" onClick={() => setEditingCommission({ id: a.id, name: a.name, current: s.commission })}>✏ Edit</button>
+                  </div>
+                  {a.email && <p className="muted" style={{marginTop:2}}>{a.email}</p>}
                   {a.notes && <p className="muted" style={{fontStyle:"italic"}}>{a.notes}</p>}
                 </div>
                 <button className="btn-danger-sm ml-auto" onClick={() => { if(confirm("Delete artist?")) db.collection("artists").doc(a.id).delete(); }}>✕</button>
@@ -428,7 +467,54 @@ function ArtistsTab({ artists, artistStats, onAdd }) {
           );
         })}
       </div>
+      {editingCommission && (
+        <EditCommissionModal
+          artist={editingCommission}
+          onClose={() => setEditingCommission(null)}
+        />
+      )}
     </div>
+  );
+}
+
+function EditCommissionModal({ artist, onClose }) {
+  const [commission, setCommission] = useState((artist.current * 100).toFixed(0));
+  const [saving, setSaving] = useState(false);
+  const commissionNum = parseFloat(commission);
+  const commissionValid = !isNaN(commissionNum) && commissionNum >= 0 && commissionNum <= 100;
+  async function save() {
+    if (!commissionValid) return;
+    setSaving(true);
+    await db.collection("artists").doc(artist.id).update({ commission: commissionNum / 100 });
+    onClose();
+  }
+  return (
+    <Modal title={`Edit commission — ${artist.name}`} onClose={onClose}>
+      <div className="form">
+        <label>Café commission (%)</label>
+        <div className="commission-row">
+          <input
+            value={commission}
+            onChange={e => setCommission(e.target.value)}
+            type="number"
+            min="0"
+            max="100"
+            step="1"
+            placeholder="30"
+            inputMode="decimal"
+            autoFocus
+            style={!commissionValid && commission !== "" ? {borderColor:"#dc2626"} : {}}
+          />
+          <span className="pct-label">% → artist gets {commissionValid ? (100 - commissionNum).toFixed(0) : "—"}%</span>
+        </div>
+        <div className="form-actions">
+          <button className="btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn-primary" onClick={save} disabled={saving || !commissionValid}>
+            {saving ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </div>
+    </Modal>
   );
 }
 
@@ -514,11 +600,22 @@ function AddArtistModal({ onClose }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
+  const [commission, setCommission] = useState("30");
   const [saving, setSaving] = useState(false);
+
+  const commissionNum = parseFloat(commission);
+  const commissionValid = !isNaN(commissionNum) && commissionNum >= 0 && commissionNum <= 100;
+
   async function save() {
-    if (!name.trim()) return;
+    if (!name.trim() || !commissionValid) return;
     setSaving(true);
-    await db.collection("artists").add({ name: name.trim(), email, notes, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    await db.collection("artists").add({
+      name: name.trim(),
+      email,
+      notes,
+      commission: commissionNum / 100,   // store as fraction 0–1
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
     onClose();
   }
   return (
@@ -526,25 +623,45 @@ function AddArtistModal({ onClose }) {
       <div className="form">
         <label>Name *</label>
         <input value={name} onChange={e => setName(e.target.value)} placeholder="Artist name" autoFocus />
+        <label>Café commission (%) *</label>
+        <div className="commission-row">
+          <input
+            value={commission}
+            onChange={e => setCommission(e.target.value)}
+            type="number"
+            min="0"
+            max="100"
+            step="1"
+            placeholder="30"
+            inputMode="decimal"
+            style={!commissionValid && commission !== "" ? {borderColor:"#dc2626"} : {}}
+          />
+          <span className="pct-label">%  →  artist gets {commissionValid ? (100 - commissionNum).toFixed(0) : "—"}%</span>
+        </div>
         <label>Email</label>
         <input value={email} onChange={e => setEmail(e.target.value)} placeholder="artist@email.com" type="email" />
         <label>Notes</label>
         <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Any notes…" rows={2} />
         <div className="form-actions">
           <button className="btn-secondary" onClick={onClose}>Cancel</button>
-          <button className="btn-primary" onClick={save} disabled={saving || !name.trim()}>{saving ? "Saving…" : "Add Artist"}</button>
+          <button className="btn-primary" onClick={save} disabled={saving || !name.trim() || !commissionValid}>
+            {saving ? "Saving…" : "Add Artist"}
+          </button>
         </div>
       </div>
     </Modal>
   );
 }
 
-function AddSaleModal({ artists, onClose }) {
+function AddSaleModal({ artists, artistCommission, onClose }) {
   const [artistId, setArtistId] = useState(artists[0]?.id || "");
   const [item, setItem] = useState("");
   const [price, setPrice] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0,10));
   const [saving, setSaving] = useState(false);
+
+  const rate = artistId ? artistCommission(artistId) : DEFAULT_COMMISSION;
+
   async function save() {
     if (!artistId || !item.trim() || !price) return;
     setSaving(true);
@@ -558,14 +675,19 @@ function AddSaleModal({ artists, onClose }) {
         <select value={artistId} onChange={e => setArtistId(e.target.value)}>
           {artists.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
         </select>
+        {artistId && (
+          <div style={{fontSize:12,color:"var(--muted)",marginTop:2}}>
+            Commission: café {fmtPct(rate)} / artist {fmtPct(1-rate)}
+          </div>
+        )}
         <label>Item *</label>
         <input value={item} onChange={e => setItem(e.target.value)} placeholder="e.g. Print, Painting, Mug…" />
         <label>Price (€) *</label>
         <input value={price} onChange={e => setPrice(e.target.value)} type="number" min="0" step="0.01" placeholder="0.00" inputMode="decimal" />
         {price && (
           <div className="price-preview">
-            <span>Café: <strong>{fmt(parseFloat(price) * COMMISSION)}</strong></span>
-            <span>Artist: <strong>{fmt(parseFloat(price) * (1-COMMISSION))}</strong></span>
+            <span>Café ({fmtPct(rate)}): <strong>{fmt(parseFloat(price) * rate)}</strong></span>
+            <span>Artist ({fmtPct(1-rate)}): <strong>{fmt(parseFloat(price) * (1-rate))}</strong></span>
           </div>
         )}
         <label>Date *</label>
