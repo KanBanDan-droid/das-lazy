@@ -22,8 +22,6 @@
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 15px; line-height: 1.6; overscroll-behavior: none; }
     .app { display: flex; flex-direction: column; min-height: 100vh; }
-
-    /* ── HEADER ── */
     header { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
     .header-inner { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; height: 60px; display: flex; align-items: center; gap: 1.5rem; }
     .logo { display: flex; align-items: center; gap: 10px; }
@@ -34,23 +32,17 @@
     .nav-btn { background: none; border: none; padding: 7px 14px; border-radius: var(--radius-sm); cursor: pointer; font-family: inherit; font-size: 14px; color: var(--muted); font-weight: 500; transition: all 0.15s; min-height: 36px; }
     .nav-btn:hover { background: var(--bg); color: var(--text); }
     .nav-btn.active { background: var(--accent-light); color: var(--accent); }
-
-    /* ── BOTTOM NAV ── */
     .bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 20; background: var(--surface); border-top: 1px solid var(--border); padding-bottom: var(--safe-bottom); }
     .bottom-nav-inner { display: flex; height: var(--bottom-nav-h); }
     .bnav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: none; border: none; cursor: pointer; font-family: inherit; font-size: 10px; font-weight: 500; color: var(--muted); letter-spacing: 0.03em; text-transform: uppercase; padding: 8px 4px; }
     .bnav-btn.active { color: var(--accent); }
     .bnav-icon { width: 36px; height: 22px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: background 0.15s; }
     .bnav-btn.active .bnav-icon { background: var(--accent-light); }
-
-    /* ── MAIN ── */
     main { flex: 1; max-width: 1100px; margin: 0 auto; width: 100%; padding: 1.5rem 1.5rem 2rem; }
     .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
     .page-header h2 { font-family: 'DM Serif Display', serif; font-size: 24px; font-weight: 400; }
     .section-header { margin: 1.75rem 0 0.75rem; }
     .section-header h3 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
-
-    /* ── STATS ── */
     .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.5rem; }
     .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; }
     .stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 4px; }
@@ -59,8 +51,6 @@
     .stat-green .stat-value { color: var(--green); }
     .stat-teal .stat-value { color: var(--teal); }
     .stat-amber .stat-value { color: var(--amber); }
-
-    /* ── ARTIST SUMMARY ── */
     .artist-cards { display: flex; flex-direction: column; gap: 8px; }
     .artist-summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.9rem 1rem; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: background 0.1s; }
     .artist-summary-card:active { background: var(--bg); }
@@ -71,8 +61,6 @@
     .badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
     .badge-amber { background: var(--amber-light); color: var(--amber); }
     .badge-green { background: var(--green-light); color: var(--green); }
-
-    /* ── ARTIST CARDS ── */
     .artist-list { display: flex; flex-direction: column; gap: 12px; }
     .artist-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; }
     .artist-card-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 0.9rem; padding-bottom: 0.9rem; border-bottom: 1px solid var(--border); }
@@ -84,13 +72,9 @@
     .mini-stat label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
     .mini-stat.amber span { color: var(--amber); }
     .mini-stat.green span { color: var(--green); }
-
-    /* commission badge on artist card */
     .commission-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--accent-light); color: var(--accent); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; margin-top: 3px; }
     .btn-edit-commission { background: none; border: 1px solid var(--border); color: var(--muted); cursor: pointer; font-family: inherit; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; margin-top: 3px; margin-left: 4px; min-height: 0; }
     .btn-edit-commission:hover { border-color: var(--accent); color: var(--accent); }
-
-    /* ── TABLE (desktop) ── */
     .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
     th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); background: var(--surface2); border-bottom: 1px solid var(--border); }
@@ -100,7 +84,14 @@
     td.green { color: var(--green); font-weight: 500; }
     td.blue { color: var(--blue); font-weight: 500; }
 
-    /* ── SALE CARDS (mobile) ── */
+    /* ── FILTER BAR ── */
+    .filter-bar { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
+    .filter-chip { background: var(--surface); border: 1.5px solid var(--border); border-radius: 20px; padding: 5px 14px; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; transition: all 0.15s; white-space: nowrap; min-height: 34px; display: flex; align-items: center; }
+    .filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .filter-chip.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+    .filter-summary { font-size: 12px; color: var(--muted); margin-bottom: 0.75rem; }
+    .filter-summary strong { color: var(--text); }
+
     .sale-cards { display: none; flex-direction: column; gap: 8px; }
     .sale-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.9rem 1rem; }
     .sale-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
@@ -114,13 +105,9 @@
     .amt-total { font-weight: 600; font-size: 15px; }
     .amt-cafe { color: var(--green); font-weight: 500; }
     .amt-artist { color: var(--blue); font-weight: 500; }
-
-    /* ── PAYOUTS ── */
     .payout-pending { display: flex; flex-direction: column; gap: 8px; margin-bottom: 0.5rem; }
     .pending-card { background: var(--amber-light); border: 1px solid #fde68a; border-radius: var(--radius); padding: 0.8rem 1rem; display: flex; align-items: center; gap: 10px; }
     .pending-card .amber { color: var(--amber); font-weight: 600; }
-
-    /* ── BUTTONS ── */
     .btn-primary { background: var(--accent); color: white; border: none; padding: 10px 18px; border-radius: var(--radius-sm); font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer; min-height: 44px; }
     .btn-primary:active { background: #9a4519; }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -128,16 +115,12 @@
     .btn-danger-sm { background: none; border: none; color: #ccc; cursor: pointer; font-size: 15px; padding: 8px; min-width: 36px; min-height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 6px; }
     .btn-danger-sm:active { background: #fee2e2; color: #dc2626; }
     .btn-link { background: none; border: none; color: var(--accent); cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 4px 0; text-decoration: underline; }
-
-    /* ── MODAL SHEET ── */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: flex-end; justify-content: center; z-index: 100; }
     .modal { background: var(--surface); border-radius: 20px 20px 0 0; width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: var(--safe-bottom); }
     .modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 12px auto 0; }
     .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 1.25rem 0.5rem; }
     .modal-header h3 { font-size: 17px; font-weight: 600; }
     .modal-close { background: var(--bg); border: none; cursor: pointer; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; color: var(--muted); }
-
-    /* ── FORM ── */
     .form { padding: 0.5rem 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 6px; }
     .form label { font-size: 13px; font-weight: 600; color: var(--muted); margin-top: 6px; }
     .form input, .form select, .form textarea { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 11px 12px; font-family: inherit; font-size: 16px; background: var(--surface); color: var(--text); width: 100%; min-height: 46px; }
@@ -148,18 +131,13 @@
     .price-preview { background: var(--bg); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 13px; display: flex; gap: 16px; color: var(--muted); }
     .price-preview strong { color: var(--text); }
     .outstanding-hint { font-size: 13px; color: var(--muted); padding: 4px 0; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
-
-    /* commission input row */
     .commission-row { display: flex; align-items: center; gap: 8px; }
     .commission-row input { flex: 1; }
     .commission-row .pct-label { font-size: 14px; color: var(--muted); font-weight: 500; white-space: nowrap; }
-
-    /* ── MISC ── */
     .empty { color: var(--muted); font-size: 14px; font-style: italic; padding: 1rem 0; }
     .muted { color: var(--muted); font-size: 13px; }
     .loading { text-align: center; padding: 4rem; color: var(--muted); font-size: 16px; }
 
-    /* ── DESKTOP ≥768px ── */
     @media (min-width: 768px) {
       .desktop-nav { display: flex; }
       .bottom-nav { display: none !important; }
@@ -173,9 +151,8 @@
       .modal-handle { display: none; }
       .btn-primary:hover { background: #b0521f; }
       .btn-danger-sm:hover { background: #fee2e2; color: #dc2626; }
+      .filter-chip:active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
     }
-
-    /* ── MOBILE <768px ── */
     @media (max-width: 767px) {
       .desktop-nav { display: none; }
       .bottom-nav { display: block; }
@@ -190,6 +167,8 @@
       .sale-cards { display: flex; }
       .table-wrap { display: none; }
       .payout-pending { flex-direction: column; }
+      .filter-bar { gap: 6px; }
+      .filter-chip { font-size: 12px; padding: 4px 12px; }
     }
   </style>
 </head>
@@ -206,7 +185,6 @@
 const { useState, useEffect } = React;
 const DEFAULT_COMMISSION = 0.30;
 
-// ── PASTE YOUR FIREBASE CONFIG HERE ──────────────────────────────────────────
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyCZUPk4_YCb0RUieWSzzq87gdqkkJ67_eM",
   authDomain: "das-lazy.firebaseapp.com",
@@ -215,7 +193,6 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "831176176893",
   appId: "1:831176176893:web:18d75d5c46dc6aa2d13a94",
 };
-// ─────────────────────────────────────────────────────────────────────────────
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
@@ -228,9 +205,7 @@ function fmtDate(ts) {
   const d = ts.toDate ? ts.toDate() : new Date(ts);
   return d.toLocaleDateString("de-AT", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
-function fmtPct(rate) {
-  return (rate * 100).toFixed(0) + "%";
-}
+function fmtPct(rate) { return (rate * 100).toFixed(0) + "%"; }
 
 const NAV = [
   { id: "dashboard", icon: "☕", label: "Overview" },
@@ -263,7 +238,6 @@ function App() {
   function artistName(id) { return getArtist(id)?.name || "Unknown"; }
   function artistCommission(id) {
     const a = getArtist(id);
-    // support commission stored as 0–100 (percent) or 0–1 (fraction); default 30%
     if (a?.commission != null) {
       const v = parseFloat(a.commission);
       return v > 1 ? v / 100 : v;
@@ -372,14 +346,56 @@ function Dashboard({ totalRev, totalCafe, totalOut, totalPaid, artists, artistSt
   );
 }
 
+// ── SALES TAB with filter ─────────────────────────────────────────────────────
 function SalesTab({ sales, artists, artistName, artistCommission, onAdd }) {
+  const [filterArtistId, setFilterArtistId] = useState("all");
   const del = id => { if(confirm("Delete this sale?")) db.collection("sales").doc(id).delete(); };
+
+  const filtered = filterArtistId === "all" ? sales : sales.filter(s => s.artistId === filterArtistId);
+  const filteredRev = filtered.reduce((sum, s) => sum + s.price, 0);
+  const filteredCafe = filtered.reduce((sum, s) => sum + s.price * artistCommission(s.artistId), 0);
+  const filteredArtist = filteredRev - filteredCafe;
+
   return (
     <div className="page">
-      <div className="page-header"><h2>Sales</h2><button className="btn-primary" onClick={onAdd}>+ Add Sale</button></div>
-      {sales.length === 0 && <p className="empty">No sales recorded yet.</p>}
+      <div className="page-header">
+        <h2>Sales</h2>
+        <button className="btn-primary" onClick={onAdd}>+ Add Sale</button>
+      </div>
+
+      {/* Filter chips */}
+      {artists.length > 0 && (
+        <div className="filter-bar">
+          <button
+            className={`filter-chip ${filterArtistId === "all" ? "active" : ""}`}
+            onClick={() => setFilterArtistId("all")}
+          >
+            All artists
+          </button>
+          {artists.map(a => (
+            <button
+              key={a.id}
+              className={`filter-chip ${filterArtistId === a.id ? "active" : ""}`}
+              onClick={() => setFilterArtistId(a.id)}
+            >
+              {a.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Summary line when filtered */}
+      {filtered.length > 0 && (
+        <p className="filter-summary">
+          <strong>{filtered.length}</strong> sale{filtered.length !== 1 ? "s" : ""} · total <strong>{fmt(filteredRev)}</strong> · café <strong>{fmt(filteredCafe)}</strong> · artist <strong>{fmt(filteredArtist)}</strong>
+        </p>
+      )}
+
+      {filtered.length === 0 && <p className="empty">No sales{filterArtistId !== "all" ? " for this artist" : ""} yet.</p>}
+
+      {/* Mobile cards */}
       <div className="sale-cards">
-        {sales.map(s => {
+        {filtered.map(s => {
           const rate = artistCommission(s.artistId);
           return (
             <div key={s.id} className="sale-card">
@@ -402,12 +418,14 @@ function SalesTab({ sales, artists, artistName, artistCommission, onAdd }) {
           );
         })}
       </div>
+
+      {/* Desktop table */}
       <div className="table-wrap">
-        {sales.length > 0 && (
+        {filtered.length > 0 && (
           <table>
             <thead><tr><th>Date</th><th>Artist</th><th>Item</th><th>Price</th><th>Café</th><th>Artist</th><th></th></tr></thead>
             <tbody>
-              {sales.map(s => {
+              {filtered.map(s => {
                 const rate = artistCommission(s.artistId);
                 return (
                   <tr key={s.id}>
@@ -467,12 +485,7 @@ function ArtistsTab({ artists, artistStats, onAdd }) {
           );
         })}
       </div>
-      {editingCommission && (
-        <EditCommissionModal
-          artist={editingCommission}
-          onClose={() => setEditingCommission(null)}
-        />
-      )}
+      {editingCommission && <EditCommissionModal artist={editingCommission} onClose={() => setEditingCommission(null)} />}
     </div>
   );
 }
@@ -493,25 +506,12 @@ function EditCommissionModal({ artist, onClose }) {
       <div className="form">
         <label>Café commission (%)</label>
         <div className="commission-row">
-          <input
-            value={commission}
-            onChange={e => setCommission(e.target.value)}
-            type="number"
-            min="0"
-            max="100"
-            step="1"
-            placeholder="30"
-            inputMode="decimal"
-            autoFocus
-            style={!commissionValid && commission !== "" ? {borderColor:"#dc2626"} : {}}
-          />
+          <input value={commission} onChange={e => setCommission(e.target.value)} type="number" min="0" max="100" step="1" placeholder="30" inputMode="decimal" autoFocus style={!commissionValid && commission !== "" ? {borderColor:"#dc2626"} : {}} />
           <span className="pct-label">% → artist gets {commissionValid ? (100 - commissionNum).toFixed(0) : "—"}%</span>
         </div>
         <div className="form-actions">
           <button className="btn-secondary" onClick={onClose}>Cancel</button>
-          <button className="btn-primary" onClick={save} disabled={saving || !commissionValid}>
-            {saving ? "Saving…" : "Save"}
-          </button>
+          <button className="btn-primary" onClick={save} disabled={saving || !commissionValid}>{saving ? "Saving…" : "Save"}</button>
         </div>
       </div>
     </Modal>
@@ -532,10 +532,7 @@ function PayoutsTab({ payouts, artists, artistName, artistStats, onAdd }) {
           return (
             <div key={a.id} className="pending-card">
               <div className="artist-avatar">{a.name.slice(0,2).toUpperCase()}</div>
-              <div style={{flex:1}}>
-                <strong>{a.name}</strong>
-                <p className="muted">Owed: <span className="amber">{fmt(s.outstanding)}</span></p>
-              </div>
+              <div style={{flex:1}}><strong>{a.name}</strong><p className="muted">Owed: <span className="amber">{fmt(s.outstanding)}</span></p></div>
             </div>
           );
         })}
@@ -602,20 +599,12 @@ function AddArtistModal({ onClose }) {
   const [notes, setNotes] = useState("");
   const [commission, setCommission] = useState("30");
   const [saving, setSaving] = useState(false);
-
   const commissionNum = parseFloat(commission);
   const commissionValid = !isNaN(commissionNum) && commissionNum >= 0 && commissionNum <= 100;
-
   async function save() {
     if (!name.trim() || !commissionValid) return;
     setSaving(true);
-    await db.collection("artists").add({
-      name: name.trim(),
-      email,
-      notes,
-      commission: commissionNum / 100,   // store as fraction 0–1
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
+    await db.collection("artists").add({ name: name.trim(), email, notes, commission: commissionNum / 100, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
     onClose();
   }
   return (
@@ -625,17 +614,7 @@ function AddArtistModal({ onClose }) {
         <input value={name} onChange={e => setName(e.target.value)} placeholder="Artist name" autoFocus />
         <label>Café commission (%) *</label>
         <div className="commission-row">
-          <input
-            value={commission}
-            onChange={e => setCommission(e.target.value)}
-            type="number"
-            min="0"
-            max="100"
-            step="1"
-            placeholder="30"
-            inputMode="decimal"
-            style={!commissionValid && commission !== "" ? {borderColor:"#dc2626"} : {}}
-          />
+          <input value={commission} onChange={e => setCommission(e.target.value)} type="number" min="0" max="100" step="1" placeholder="30" inputMode="decimal" style={!commissionValid && commission !== "" ? {borderColor:"#dc2626"} : {}} />
           <span className="pct-label">%  →  artist gets {commissionValid ? (100 - commissionNum).toFixed(0) : "—"}%</span>
         </div>
         <label>Email</label>
@@ -644,9 +623,7 @@ function AddArtistModal({ onClose }) {
         <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Any notes…" rows={2} />
         <div className="form-actions">
           <button className="btn-secondary" onClick={onClose}>Cancel</button>
-          <button className="btn-primary" onClick={save} disabled={saving || !name.trim() || !commissionValid}>
-            {saving ? "Saving…" : "Add Artist"}
-          </button>
+          <button className="btn-primary" onClick={save} disabled={saving || !name.trim() || !commissionValid}>{saving ? "Saving…" : "Add Artist"}</button>
         </div>
       </div>
     </Modal>
@@ -659,9 +636,7 @@ function AddSaleModal({ artists, artistCommission, onClose }) {
   const [price, setPrice] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0,10));
   const [saving, setSaving] = useState(false);
-
   const rate = artistId ? artistCommission(artistId) : DEFAULT_COMMISSION;
-
   async function save() {
     if (!artistId || !item.trim() || !price) return;
     setSaving(true);
@@ -675,11 +650,7 @@ function AddSaleModal({ artists, artistCommission, onClose }) {
         <select value={artistId} onChange={e => setArtistId(e.target.value)}>
           {artists.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
         </select>
-        {artistId && (
-          <div style={{fontSize:12,color:"var(--muted)",marginTop:2}}>
-            Commission: café {fmtPct(rate)} / artist {fmtPct(1-rate)}
-          </div>
-        )}
+        {artistId && <div style={{fontSize:12,color:"var(--muted)",marginTop:2}}>Commission: café {fmtPct(rate)} / artist {fmtPct(1-rate)}</div>}
         <label>Item *</label>
         <input value={item} onChange={e => setItem(e.target.value)} placeholder="e.g. Print, Painting, Mug…" />
         <label>Price (€) *</label>
